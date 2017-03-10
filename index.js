@@ -258,6 +258,7 @@ exports.middleware = (store) => (next) => (action) => {
             break;
         case 'SESSION_ADD_DATA':
             const { data } = action;
+            console.log(data.charCodeAt(0));
             if (data.charCodeAt(0) === 27) setCwd(curPid);
             break;
         case 'SESSION_SET_ACTIVE':
