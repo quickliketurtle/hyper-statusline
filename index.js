@@ -150,7 +150,7 @@ let curRemote;
 let repoDirty;
 let pushArrow;
 let pullArrow;
-let curValetUrl;
+let curDevUrl;
 
 // Current shell cwd
 const setCwd = (pid) => {
@@ -196,10 +196,10 @@ const checkArrows = (actionCwd) => {
     })
 };
 
-// Set Valet Url
-const setValetUrl = (pid) => {
+// Set Dev Url
+const setDevUrl = (pid) => {
     exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9- | rev | cut -d '/' -f1 | rev`, (err, cwd) => {
-        curValetUrl = 'http://' + cwd.trim() + '.dev';
+        curDevUrl = 'http://' + cwd.trim() + '.dev';
     })
 };
 
@@ -215,12 +215,12 @@ exports.decorateHyper = (Hyper, { React }) => {
                 dirty: repoDirty,
                 push: pushArrow,
                 pull: pullArrow,
-                valetUrl: curValetUrl,
+                devUrl: curDevUrl,
             }
             this.handleClick = this.handleClick.bind(this);
         }
         handleClick(e) {
-            if (e.target.classList.contains('item_url')) shell.openExternal(this.state.valetUrl);
+            if (e.target.classList.contains('item_url')) shell.openExternal(this.state.devUrl);
             else if (e.target.classList.contains('item_folder')) shell.openExternal('file://'+this.state.folder);
             else shell.openExternal(this.state.remote);
         }
@@ -231,13 +231,13 @@ exports.decorateHyper = (Hyper, { React }) => {
             const isDirty = this.state.dirty ? ' icon_active' : '';
             const hasPush = this.state.push ? ' icon_active' : '';
             const hasPull = this.state.pull ? ' icon_active' : '';
-            const hasValetUrl = this.state.valetUrl ? ' item_active item_click' : '';
+            const hasDevUrl = this.state.devUrl ? ' item_active item_click' : '';
 
             return (
                 React.createElement(Hyper, Object.assign({}, this.props, {
                     customChildren: React.createElement('footer', { className: 'footer_footer' },
                         React.createElement('div', { title: this.state.folder, className: `item_item item_folder${hasFolder}`, onClick: this.handleClick }, this.state.folder ? tildify(String(this.state.folder)) : ''),
-                        React.createElement('div', { title: this.state.valetUrl, className: `item_item item_url${hasValetUrl}`, onClick: this.handleClick }, this.state.valetUrl ? this.state.valetUrl : ''),
+                        React.createElement('div', { title: this.state.devUrl, className: `item_item item_url${hasDevUrl}`, onClick: this.handleClick }, this.state.devUrl ? this.state.devUrl : ''),
                         React.createElement('div', { title: this.state.remote, className: `item_item item_branch${hasBranch}${hasRemote}`, onClick: this.handleClick },
                             React.createElement('span', { className: 'item_text' }, this.state.branch),
                             React.createElement('i', { title: 'git-dirty', className: `item_icon icon_dirty${isDirty}` }),
@@ -257,7 +257,7 @@ exports.decorateHyper = (Hyper, { React }) => {
                     dirty: repoDirty,
                     push: pushArrow,
                     pull: pullArrow,
-                    valetUrl: curValetUrl,
+                    devUrl: curDevUrl,
                 })
             }, 100)
         }
@@ -278,7 +278,7 @@ exports.middleware = (store) => (next) => (action) => {
         case 'SESSION_ADD':
             curPid = action.pid;
             setCwd(curPid);
-            setValetUrl(curPid);
+            setDevUrl(curPid);
             break;
         case 'SESSION_ADD_DATA':
             const { data } = action;
@@ -286,13 +286,13 @@ exports.middleware = (store) => (next) => (action) => {
 
             if (enterKey) {
                 setCwd(curPid);
-                setValetUrl(curPid);
+                setDevUrl(curPid);
             }
             break;
         case 'SESSION_SET_ACTIVE':
             curPid = uids[action.uid].pid;
             setCwd(curPid);
-            setValetUrl(curPid);
+            setDevUrl(curPid);
             break;
     }
     next(action);
