@@ -99,7 +99,7 @@ exports.decorateConfig = (config) => {
                 text-decoration: underline;
                 cursor: pointer;
             }
-            .item_folder, .item_text {
+            .item_folder, .item_url, .item_text {
                 line-height: 29px;
             }
             .item_text {
@@ -129,6 +129,16 @@ exports.decorateConfig = (config) => {
                 transform: scaleY(-1);
                 -webkit-mask-position: 0 8px;
             }
+            .item_url {
+                display: inline-block;
+                text-overflow: ellipsis;
+                padding-left: 21px;
+                overflow: hidden;
+            }
+            .item_url:before {
+                -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjUxMnB4IiBoZWlnaHQ9IjUxMnB4IiB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgNTEyIDUxMiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8cGF0aCBmaWxsPSIjMDEwMTAxIiBkPSJNNDU5LjY1NCwyMzMuMzczbC05MC41MzEsOTAuNWMtNDkuOTY5LDUwLTEzMS4wMzEsNTAtMTgxLDBjLTcuODc1LTcuODQ0LTE0LjAzMS0xNi42ODgtMTkuNDM4LTI1LjgxMyAgbDQyLjA2My00Mi4wNjNjMi0yLjAxNiw0LjQ2OS0zLjE3Miw2LjgyOC00LjUzMWMyLjkwNiw5LjkzOCw3Ljk4NCwxOS4zNDQsMTUuNzk3LDI3LjE1NmMyNC45NTMsMjQuOTY5LDY1LjU2MywyNC45MzgsOTAuNSwwICBsOTAuNS05MC41YzI0Ljk2OS0yNC45NjksMjQuOTY5LTY1LjU2MywwLTkwLjUxNmMtMjQuOTM4LTI0Ljk1My02NS41MzEtMjQuOTUzLTkwLjUsMGwtMzIuMTg4LDMyLjIxOSAgYy0yNi4xMDktMTAuMTcyLTU0LjI1LTEyLjkwNi04MS42NDEtOC44OTFsNjguNTc4LTY4LjU3OGM1MC00OS45ODQsMTMxLjAzMS00OS45ODQsMTgxLjAzMSwwICBDNTA5LjYyMywxMDIuMzQyLDUwOS42MjMsMTgzLjM4OSw0NTkuNjU0LDIzMy4zNzN6IE0yMjAuMzI2LDM4Mi4xODZsLTMyLjIwMywzMi4yMTljLTI0Ljk1MywyNC45MzgtNjUuNTYzLDI0LjkzOC05MC41MTYsMCAgYy0yNC45NTMtMjQuOTY5LTI0Ljk1My02NS41NjMsMC05MC41MzFsOTAuNTE2LTkwLjVjMjQuOTY5LTI0Ljk2OSw2NS41NDctMjQuOTY5LDkwLjUsMGM3Ljc5Nyw3Ljc5NywxMi44NzUsMTcuMjAzLDE1LjgxMywyNy4xMjUgIGMyLjM3NS0xLjM3NSw0LjgxMy0yLjUsNi44MTMtNC41bDQyLjA2My00Mi4wNDdjLTUuMzc1LTkuMTU2LTExLjU2My0xNy45NjktMTkuNDM4LTI1LjgyOGMtNDkuOTY5LTQ5Ljk4NC0xMzEuMDMxLTQ5Ljk4NC0xODEuMDE2LDAgIGwtOTAuNSw5MC41Yy00OS45ODQsNTAtNDkuOTg0LDEzMS4wMzEsMCwxODEuMDMxYzQ5Ljk4NCw0OS45NjksMTMxLjAzMSw0OS45NjksMTgxLjAxNiwwbDY4LjU5NC02OC41OTQgIEMyNzQuNTYxLDM5NS4wOTIsMjQ2LjQyLDM5Mi4zNDIsMjIwLjMyNiwzODIuMTg2eiIvPg0KPC9zdmc+');
+                -webkit-mask-size: 14px 12px;
+            }
         `
     })
 };
@@ -140,6 +150,7 @@ let curRemote;
 let repoDirty;
 let pushArrow;
 let pullArrow;
+let curValetUrl;
 
 // Current shell cwd
 const setCwd = (pid) => {
@@ -185,6 +196,13 @@ const checkArrows = (actionCwd) => {
     })
 };
 
+// Set Valet Url
+const setValetUrl = (pid) => {
+    exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9- | rev | cut -d '/' -f1 | rev`, (err, cwd) => {
+        curValetUrl = 'http://' + cwd.trim() + '.dev';
+    })
+};
+
 // Status line
 exports.decorateHyper = (Hyper, { React }) => {
     return class extends React.Component {
@@ -197,11 +215,13 @@ exports.decorateHyper = (Hyper, { React }) => {
                 dirty: repoDirty,
                 push: pushArrow,
                 pull: pullArrow,
+                valetUrl: curValetUrl,
             }
             this.handleClick = this.handleClick.bind(this);
         }
         handleClick(e) {
-            if (e.target.classList.contains('item_folder')) shell.openExternal('file://'+this.state.folder);
+            if (e.target.classList.contains('item_url')) shell.openExternal(this.state.valetUrl);
+            else if (e.target.classList.contains('item_folder')) shell.openExternal('file://'+this.state.folder);
             else shell.openExternal(this.state.remote);
         }
         render() {
@@ -211,11 +231,13 @@ exports.decorateHyper = (Hyper, { React }) => {
             const isDirty = this.state.dirty ? ' icon_active' : '';
             const hasPush = this.state.push ? ' icon_active' : '';
             const hasPull = this.state.pull ? ' icon_active' : '';
+            const hasValetUrl = this.state.valetUrl ? ' item_active item_click' : '';
 
             return (
                 React.createElement(Hyper, Object.assign({}, this.props, {
                     customChildren: React.createElement('footer', { className: 'footer_footer' },
                         React.createElement('div', { title: this.state.folder, className: `item_item item_folder${hasFolder}`, onClick: this.handleClick }, this.state.folder ? tildify(String(this.state.folder)) : ''),
+                        React.createElement('div', { title: this.state.valetUrl, className: `item_item item_url${hasValetUrl}`, onClick: this.handleClick }, this.state.valetUrl ? this.state.valetUrl : ''),
                         React.createElement('div', { title: this.state.remote, className: `item_item item_branch${hasBranch}${hasRemote}`, onClick: this.handleClick },
                             React.createElement('span', { className: 'item_text' }, this.state.branch),
                             React.createElement('i', { title: 'git-dirty', className: `item_icon icon_dirty${isDirty}` }),
@@ -235,6 +257,7 @@ exports.decorateHyper = (Hyper, { React }) => {
                     dirty: repoDirty,
                     push: pushArrow,
                     pull: pullArrow,
+                    valetUrl: curValetUrl,
                 })
             }, 100)
         }
@@ -255,16 +278,21 @@ exports.middleware = (store) => (next) => (action) => {
         case 'SESSION_ADD':
             curPid = action.pid;
             setCwd(curPid);
+            setValetUrl(curPid);
             break;
         case 'SESSION_ADD_DATA':
             const { data } = action;
             const enterKey = data.indexOf('\n') > 0;
 
-            if (enterKey) setCwd(curPid);
+            if (enterKey) {
+                setCwd(curPid);
+                setValetUrl(curPid);
+            }
             break;
         case 'SESSION_SET_ACTIVE':
             curPid = uids[action.uid].pid;
             setCwd(curPid);
+            setValetUrl(curPid);
             break;
     }
     next(action);
