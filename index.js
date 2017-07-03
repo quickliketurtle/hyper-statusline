@@ -169,7 +169,6 @@ const setBranch = (actionCwd) => {
             setRemote(actionCwd);
             checkDirty(actionCwd);
             checkArrows(actionCwd);
-            setDevUrl(actionCwd);
         }
     })
 };
@@ -198,8 +197,10 @@ const checkArrows = (actionCwd) => {
 };
 
 // Set Dev Url
-const setDevUrl = (actionCwd) => {
-    curDevUrl = 'http://' + actionCwd.split('/').pop() + '.dev';
+const setDevUrl = (pid) => {
+    exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9- | rev | cut -d '/' -f1 | rev`, (err, cwd) => {
+        curDevUrl = 'http://' + cwd.trim() + '.dev';
+    })
 };
 
 // Status line
@@ -277,6 +278,7 @@ exports.middleware = (store) => (next) => (action) => {
         case 'SESSION_ADD':
             curPid = action.pid;
             setCwd(curPid);
+            setDevUrl(curPid);
             break;
         case 'SESSION_ADD_DATA':
             const { data } = action;
@@ -284,11 +286,13 @@ exports.middleware = (store) => (next) => (action) => {
 
             if (enterKey) {
                 setCwd(curPid);
+                setDevUrl(curPid);
             }
             break;
         case 'SESSION_SET_ACTIVE':
             curPid = uids[action.uid].pid;
             setCwd(curPid);
+            setDevUrl(curPid);
             break;
     }
     next(action);
