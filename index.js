@@ -198,9 +198,13 @@ const checkArrows = (actionCwd) => {
 
 // Set Dev Url
 const setDevUrl = (pid) => {
-    exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9- | rev | cut -d '/' -f1 | rev`, (err, cwd) => {
-        curDevUrl = 'http://' + cwd.trim() + '.dev';
-    })
+    if (curBranch) {
+         exec(`lsof -p ${pid} | grep cwd | tr -s ' ' | cut -d ' ' -f9- | rev | cut -d '/' -f1 | rev`, (err, cwd) => {
+            curDevUrl = 'http://' + cwd.trim() + '.dev';
+        })
+    } else {
+        curDevUrl = '';
+    }
 };
 
 // Status line
